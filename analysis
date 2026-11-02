@@ -1,0 +1,66 @@
+01. Recursive Hierarchy Traversal
+SQL
+WITH RECURSIVE org_tree AS (
+  SELECT employee_id, manager_id, name, 1 AS depth
+  FROM employees
+  WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.employee_id, e.manager_id, e.name, ot.depth + 1
+  FROM employees e
+  JOIN org_tree ot ON e.manager_id = ot.employee_id
+)
+SELECT employee_id, manager_id, name, depth
+FROM org_tree;
+02. Running Total Calculation
+SQL
+SELECT transaction_id, transaction_date, amount,
+       SUM(amount) OVER (ORDER BY transaction_date, transaction_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total
+FROM transactions;
+03. Weekly Moving Average
+SQL
+SELECT order_date, daily_revenue,
+       AVG(daily_revenue) OVER (ORDER BY order_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS weekly_moving_avg
+FROM daily_sales;
+04. Pivot Aggregation
+SQL
+SELECT store_id,
+       SUM(CASE WHEN EXTRACT(MONTH FROM sale_date) = 1 THEN amount ELSE 0 END) AS jan_sales,
+       SUM(CASE WHEN EXTRACT(MONTH FROM sale_date) = 2 THEN amount ELSE 0 END) AS feb_sales,
+       SUM(CASE WHEN EXTRACT(MONTH FROM sale_date) = 3 THEN amount ELSE 0 END) AS mar_sales
+FROM sales
+GROUP BY store_id;
+05. Gaps and Islands Analysis
+SQL
+SELECT MIN(log_date) AS start_date, MAX(log_date) AS end_date
+FROM (
+  SELECT log_date, log_date - INTERVAL '1 day' * ROW_NUMBER() OVER (ORDER BY log_date) AS grp
+  FROM server_logs
+) t
+GROUP BY grp;
+06. Percentile Ranking
+SQL
+SELECT employee_id, department_id, salary,
+       PERCENT_RANK() OVER (PARTITION BY department_id ORDER BY salary) AS salary_percent_rank
+FROM employees;
+07. Lead and Lag Delta Evaluation
+SQL
+SELECT session_id, event_time,
+       event_time - LAG(event_time) OVER (PARTITION BY session_id ORDER BY event_time) AS time_since_last_event
+FROM user_events;
+08. JSON Array Aggregation
+SQL
+SELECT department_id,
+       JSON_AGG(JSON_BUILD_OBJECT('id', employee_id, 'name', employee_name)) AS employee_json_list
+FROM employees
+GROUP BY department_id;
+09. Conditional Rollup Aggregation
+SQL
+SELECT region, product_category, SUM(sales_amount) AS total_sales
+FROM regional_sales
+GROUP BY ROLLUP(region, product_category);
+10. Self-Join Overlap Matching
+SQL
+SELECT a.room_id, a.booking_id AS booking_one, b.booking_id AS booking_two
+FROM room_bookings a
+JOIN room_bookings b ON a.room_id = b.room_id AND a.booking_id < b.booking_id
+WHERE a.start_time < b.end_time AND a.end_time > b.start_time;
